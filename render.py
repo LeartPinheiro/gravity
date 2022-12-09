@@ -23,13 +23,14 @@ def desenhar():
     screen.fill((100, 100, 255))
     desenhar_particulas()
     desenhar_paused() if paused else None
+    desenhar_escolha()
     pygame.display.update()
 
 def desenhar_particulas():
     for p in mundo.objs:
         pygame.draw.circle(screen, obter_cor(p), (int(p.pos.x), int(p.pos.y)), int(p.raio))
         desenhar_anel(p)
-        #desenhar_velocidade(p)
+        desenhar_velocidade(p)
 
 aneis_cores = {sim.Particula: None, 
     sim.ParticulaExplosiva: (225, 90, 90), 
@@ -49,10 +50,17 @@ def desenhar_paused():
 
 def desenhar_velocidade(obj):
     font = pygame.font.SysFont('Arial',25)
-    speed = obj.massa
+    speed = obj.vel.tamanho
     text = font.render(f'{speed:.2f}',True,(255,255,255))
     x = obj.pos.x - text.get_width() / 2
     y = obj.pos.y - text.get_height() / 2
+    screen.blit(text,(x,y))
+
+def desenhar_escolha():
+    font = pygame.font.SysFont('Arial',25)
+    text = font.render(f'{sim.Mundo.TIPOS_PARTICULAS[tipo["atual"]].__name__}',True,(255,255,255))
+    x = 10
+    y = 10
     screen.blit(text,(x,y))
 
 color_cache = {}
@@ -62,7 +70,6 @@ def obter_cor(obj):
         color_cache[obj] = (rd.randint(45,210),rd.randint(45,210),rd.randint(45,210))
     return color_cache[obj]
 
-mundo.objs.append(sim.ParticulaExplosiva(100,100,5,mundo))
 tipo = {'atual':0,'max':len(sim.Mundo.TIPOS_PARTICULAS)-1}
 
 def checar_botoes():
@@ -85,6 +92,12 @@ def checar_botoes():
                 tipo['atual'] += 1
                 if tipo['atual'] > tipo['max']:
                     tipo['atual'] = tipo['max']
+            if event.key == pygame.K_BACKSPACE:
+                mundo.objs = []
+                color_cache = {}
+            if event.key == pygame.K_ESCAPE:
+                return False
+    return True
                 
 
 def atualizar_infos():
@@ -98,7 +111,7 @@ def main():
         clock.tick(FPS)
         dt = clock.get_time() / 1000 * TIME_MULTIPLIER
         atualizar_infos()
-        checar_botoes()
+        run = checar_botoes()
         update(dt) if not paused else None
         desenhar()
     pygame.quit()
